@@ -1,0 +1,152 @@
+---
+title: "GLM2 package presentation"
+author: "Maksym Lesyk, 614228"
+date: "3/29/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+### GLM2 package in R
+<br />
+**Generalized Linear Models (GLMs)** are models in which response variables follow a distribution other than the normal distribution.
+Generalized linear models (GLMs) extend the concept of the linear regression model.<br />
+The linear model assumes that the conditional expectation of Y (which is a dependent or response variable) is equal to a linear combination of independent variables, written as:
+$$Y = AX + B$$
+Unfortunately, this assumption of linearity does not take into account a number of practical situations and variations, which datasets may take the form of.<br /> 
+For example, a continuous distribution of the error factor, as presented by the linear regression model, means that the Y variable must be continuous as well. Thus, linear regression may fail with counts (as corrected by the Poisson regression) and binary variables (e.g. logistic regression).<br /> 
+The term of generalized linear models goes back to the works of Nelder and Wedderburn (1972) and McCullagh and Nelder (1989).<br />
+The notation can be written down as:<br />
+$$ E(Y|X)=G^{-1}(X^{T}β) $$
+where G is the link function, E(Y|X) is the mean of the response variable and the expression in brackets is the standard expression denoting a certain linear combination.<br />
+The generalized linear model has two main features:
+1. The distribution of the response variable (Y)<br />
+2. The link function<br />
+The distribution of Y is a member of the exponential family in this case.<br />
+We say that a distribution is a member of the exponential family if its probability mass function or density function has the following form:
+$$ f(y,θ,ψ) = exp \left\{ \frac{ yθ-b(θ) } { a(ψ) } \right\} +c(y,ψ) $$
+a, b and c will vary for different Y distributions. These are previously known functions. Θ is the parameter of interest and is also sometimes called the canonical parameter. Ψ is optional and is not inherent to all distributions, so it is a nuisance parameter. The two parameters are scalar.<br />
+The link function is the second element of GLMs. It relates the expected of the response to the linear predictors of the model. The function helps transform the levels of categorical variables to fit a continuous scale, which is unbound. After this transformation, the relationships between the predictors and the dependent variable can be explained using the linear regression.<br />
+In the case that the canonical parameter Θ equals the linear predictor η:
+If Θ= η, the link function is called the canonical link function. Some of the examples of link functions are:<br />
+*Bernouli, Binomial, Poisson, Geometric, Negative Binomial, Exponential, Gamma, Normal, Inverse Gaussian.*<br />
+Thus, GLMs are very useful in a way that they may help explain a wider range of data from a more natural environment.<br />
+GLMs can be fitted using either the glm package in R or its improved version, glm2 package, which is the focus of this report.<br />
+GLM2 package is the extension of the previously existing GLM package, which includes two main functions: glm2() and glm.fit2(), the former one being more commonly used with the latter one serving as a a “workhorse” ensuring that the model converges, although it can also be called upon directly.<br />
+As described by the authors themselves:<br />
+*“GLM2 fits generalized linear models using the same model specification as glm in the stats package, but with a modified default fitting method that provides greater stability for models that may fail to converge using glm”*
+While the R function glm uses step-halving to deal with certain types of convergence problems when using iteratively reweighted least squares to fit a generalized linear model, it may sometimes fail, especially when using non-standard link functions (i.e. using log link for models where independent variables are classes).<br />
+The remedy proposed by the author (Ian C. Marschner) is to impose a stricter form of step-halving than the one available in the GLM package, so that deviance is forced to decrease at every iteration.<br />
+In the stats package of R, iteratively reweighted least squares method is implemented in GLM via the glm.fit function. However, there are two specific instances of the model non-convergance:<br />
+1. The step-halving is used but it does not lead to the convergance of the model<br />
+2. The step-halving in glm.fit is never used despite the fact that the model did not converge<br />
+GLM2 is an improved version of the GLM package as it has improved convergence properties.<br />
+The main change in GLM2 is that besides the rectification of a divergent deviance of a model and testing of invalid predicted values, which was present in GLM, glm.fit2 also tests whether the deviance is lower than in the previous iteration. If it is not, then step-halving is invoked until the deviance is eventually lower.<br />
+The glm2 function is basically identical to the glm function, except fro the default fitting method, which is glm.fit2. As such, it is possible to achieve the same results with glm if glm.fit2 is specified via the method argument in glm. In this case the two functions should be identical in what they execute.<br />
+For linear models, except for the fitting method, glm2 also leads to the same results as the lm function, so the expressions look like this:
+$$model = glm2(formula=x~y, data=dat, family=“gaussian”(link=“identity))$$
+which is the same as
+$$model = lm(formula=x~y, data=dat)$$
+glm2 can be used with default arguments where only formula, family and data have to be specified. However, it also offers an opportunity to add other arguments to the fitting process.
+The arguments are the following:<br />
+1. *Formula* - (which is presented as: dependent ~ independent1, independent2, independent3, etc.)<br />
+2. *Family* - (the distribution family should be specified in this argument: gaussian, poisson, binomial, quasibinomial, quasipoisson, gamma, etc.)<br />
+3. *Data* - (the dataset to be used by the glm2 function)<br />
+4. *Weights* - (it should be NULL or a numeric vector. Specifies weights of each individual entry fo the fitting process)<br />
+5. *Subset* - (specifies the subset of the main set)<br />
+6. *na.action* - (specifies what should be done when there is a NA entry. e.g. na.exclude excludes all the entries with NA from the dataset)<br />
+7. *Etastart* - (specifies starting values for the linear predictor)<br />
+8. *Mustart* - (specifies starting values for the vector of means)<br />
+9. *Offset* - (this argument can be used to specify an a priori known component to be included in the linear predictor during fitting. It should be NULL or a numeric vector of length equal to the number of cases)<br />
+10. *Control* – (this argument should specify a list of parameters for controlling the fitting process)<br />
+11. *Model* - (specifies a logical value indicating whether model frame should be included as a component of the returned value)<br />
+12. *Method* – (this argument is used to specify the method to be used in fitting the model e.g. glm.fit2)<br />
+13. *x, y* - (these are logical values indicating whether the response vector and model matrix used in the fitting process should be returned as components of the returned value)<br />
+14. *singular.ok* - (logical; if FALSE a singular fit is an error)<br />
+15. *Contrasts* - (an optional list to be used)<br />
+16. *Intercept* – (logical. It specifies whether an intercept be included in the null model)<br />
+17. *Object* – (an object inheriting from class "glm")<br />
+18. *Type* – (character, partial matching allowed. Type of weights to extract from the fitted model object. Can be abbreviated)<br />
+Each family has a certain link associated with it, however, where needed, unorthodox links may be used, in this case they are pointed out in brackets next to the family argument.<br />
+As such, see the families and respective links associated with them below:<br />
+**Family - Default Link Function**<br />
+Binomial - *(link=”logit”)*<br />
+gaussian - *(link=”identity”)*<br />
+Gamma - *(link=”inverse”)*<br />
+inverse.gaussian - *(link=”1/mu^2”)*<br />
+poisson - *(link=”log”)*<br />
+quasi - *(link=”identity”)*<br />
+quasibinomial - *(link=”logit”)*<br />
+quasipoisson - *(link=”log”)*<br />
+Let us see some of the examples of the glm2 package usage.<br />
+As the initial dataset we will use th data on 5000 males and 5000 females from the book by Drew Conway "Machine Learning for Hackers" with information of each individual's weight and height. Let us create a subset with only males and also draw graphs to see that our weights and heights are normally distributed.
+
+```{r, warning=FALSE}
+library(readr)
+library(ggplot2)
+X01_heights_weights_genders <- read_csv("01_heights_weights_genders.csv")
+males=subset(X01_heights_weights_genders, Gender == "Male")
+hist(males$Weight)
+hist(males$Height)
+```
+Let us then create a model using the glm2 function.
+``` {r, warning= FALSE}
+library(glm2)
+relation=glm2(data=males,formula = Weight~Height,family=gaussian) 
+summary(relation)
+```
+The summary function helps us see some important data about our model.<br />
+As such, the uppermost part repeats the form of our function. Then, we can see information on the median and 4 quarters of our deviance residuals. Asterisks in the Coefficients section present for the graphical representation of the significance of the varibles chosen for the model. Here we can see that, naturally, Height has a significant impact on the Weight data of the selected dataset. We can also see some information on Null and Residual deviance and also the number of times it took the model to iterate in order for it to converge.<br />
+Let us join our initial data with the fitted model to see how well it fits.
+```{r, warning=FALSE}
+plot(Weight ~ Height, data = males) 
+abline(relation)
+```
+As we can see the fit is rather good, as expected, whereas the dataset contained rather clean and orderly data.<br />
+The second dataset is from Kaggle. It contains information on college admissions. There are 400 entries with 4 columns:<br /> 1. admit (binary variable, where 0 is not admitted and 1 is admitted) (categorical) <br /> 2. gre (numerical) <br /> 3. gpa (numerical) <br /> 4. rank (contains 4 levels and denotes the personal ranking assigned by each individual to the college) (categorical) <br />
+``` {r, warning = FALSE}
+student_data <- read_csv("student_data.csv")
+head(student_data)
+myData=student_data
+myData$rank=as.factor(myData$rank) 
+myData$admit=as.factor(myData$admit)
+```
+Next, let us split the data into the test and training subsets.
+``` {r, warning = FALSE}
+library(caTools)
+split=sample.split(myData$rank, SplitRatio = 0.85) 
+train=subset(myData,split=="TRUE") 
+test=subset(myData,split=="FALSE")
+results=glm2(formula=admit~rank+gpa, family=binomial, data=train)
+summary(results)
+```
+4 ranks were split into 4 levels for a better representation of each rank.<br />
+As we can judge by the significance levels shown by the p-values, all of our variables are significant for the model.<br />
+Judging by the deviance, it also does not show the signs of overfitting. <br />
+It aslo took a relatively low number of times for it to converge (4). <br />
+``` {r}
+res1=predict(results,train,type = "response")
+```
+A prediction function was used to predict the outcomes based on the model obtained from the training dataset.
+``` {r}
+cf=table(x=train$admit, y=res1>0.5)
+cf
+```
+A confusion matrix shows that most of the cases were predicted correctly, although the model is inclined to predict that the application was declined.
+``` {r}
+newdata = expand.grid(gpa=seq(2,4, 0.01), rank=1:4)
+newdata$rank=as.factor(newdata$rank)
+newdata$prob = predict(results, newdata, type="response")
+ggplot(newdata, aes(gpa, prob, color=factor(rank), group=rank)) +
+geom_line()
+```
+The results can also be shown graphically as presented below. With a threshold of 0.5, only applicants with the rank of 1 or 2 have the possibility to be admitted, with the largest chance presented to the applicants with the ranking of 1. <br />
+Thus, the model shows rather good results due to the application of the glm2 package. <br />
+
+**Sources**
+<br />
+1. Müller, Marlene. (2004). Generalized Linear Models. 10.1007/978-3-642-21551-3_24.<br />
+2. https://cran.r-project.org/web/packages/glm2/glm2.pdf <br />
+3. https://www.rdocumentation.org/packages/glm2/versions/1.2.1/topics/glm2 <br />
+4.https://github.com/johnmyleswhite/ML_for_Hackers/blob/master/02-Exploration/data/01_heights_weights_genders.csv <br />
+5.https://www.kaggle.com/malapatiravi/graduate-school-admission- data/home?select=binary1.csv 
