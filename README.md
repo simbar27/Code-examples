@@ -1,3 +1,3 @@
-# hello_world
-Just another repository
-I guess I have to write something here. That's it. Thank you for all the attention.
+# Studies codes
+This repository is for the codes and notebooks that I have produced in the scope of my studies.
+However, they are not all and should rather serve as little bits of example.
